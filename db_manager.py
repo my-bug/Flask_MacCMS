@@ -51,8 +51,12 @@ class DatabaseManager:
             # 检查是否已存在 migrations 目录
             if not os.path.exists('migrations'):
                 print("→ 初始化 Flask-Migrate...")
-                migrate_init()
-                print("[完成] Flask-Migrate 初始化完成")
+                try:
+                    migrate_init(directory='migrations')
+                    print("[完成] Flask-Migrate 初始化完成")
+                except Exception as e:
+                    print(f"[警告] Flask-Migrate 初始化失败: {e}")
+                    print("[继续] 将直接创建数据库表")
             else:
                 print("[信息] migrations 目录已存在，跳过初始化")
             

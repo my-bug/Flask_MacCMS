@@ -847,7 +847,6 @@ class MacCMSCollector:
         
         finally:
             self.is_running = False
-            result = self._build_result()
             
             # 记录完成日志
             SystemLog.log(
@@ -856,15 +855,15 @@ class MacCMSCollector:
                 module='maccms_collector',
                 message='MacCMS10采集完成',
                 details=json.dumps({
-                    'success_count': result['success_count'],
-                    'failed_count': result['failed_count'],
-                    'skip_count': result['skip_count'],
-                    'consecutive_duplicates': result['consecutive_duplicates'],
-                    'errors': result['errors'][:5] if result['errors'] else []
+                    'success_count': self.success_count,
+                    'failed_count': self.failed_count,
+                    'skip_count': self.skip_count,
+                    'consecutive_duplicates': self.consecutive_duplicates,
+                    'errors': self.errors[:5] if self.errors else []
                 }, ensure_ascii=False)
             )
-            
-            return result
+        
+        return self._build_result()
     
     def _build_result(self):
         """构建采集结果"""

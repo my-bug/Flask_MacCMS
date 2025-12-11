@@ -9,9 +9,11 @@ Flask应用初始化模块
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 # 创建全局SQLAlchemy实例，用于数据库操作
 db = SQLAlchemy()
+migrate = Migrate()
 
 def create_app():
     """
@@ -35,6 +37,9 @@ def create_app():
     
     # 将数据库实例与当前应用绑定
     db.init_app(app)
+    
+    # 初始化数据库迁移
+    migrate.init_app(app, db)
     
     # 注册蓝图模块
     # 前台蓝图：处理视频浏览、搜索等前台功能
