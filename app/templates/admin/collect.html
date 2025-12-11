@@ -1,0 +1,244 @@
+{% extends "admin/base.html" %}
+
+{% block title %}MacCMS10通用采集 - 后台管理{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/maccms_collect.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="maccms-collect-container">
+    <!-- 页面头部 -->
+    <div class="maccms-collect-header">
+        <h2>MacCMS10通用采集</h2>
+        <a href="{{ url_for('admin.dashboard') }}" class="maccms-btn">返回管理</a>
+    </div>
+
+    <!-- 上下布局 -->
+    <div class="maccms-layout">
+        <!-- 第一行：配置和任务 -->
+        <div class="config-tasks-row">
+            <!-- 左侧：采集配置 -->
+            <div class="config-section">
+            <div class="maccms-card">
+                <div class="maccms-card-header">
+                    <h5>采集配置</h5>
+                </div>
+                <div class="maccms-card-body">
+                    <form id="collectForm">
+                        <!-- 采集源选择 -->
+                        <div class="maccms-form-group">
+                            <label class="maccms-form-label">选择采集源</label>
+                            <select class="maccms-form-control" name="source_id" id="sourceSelect" onchange="loadSourceUrl()">
+                                <option value="">-- 请选择采集源 --</option>
+                                {% for source in sources %}
+                                <option value="{{ source.id }}" data-url="{{ source.url }}">{{ source.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- 采集接口URL -->
+                        <div class="maccms-form-group">
+                            <label class="maccms-form-label">采集接口URL <span style="color: var(--macos-red)">*</span></label>
+                            <div class="input-group">
+                                <input type="text" class="maccms-form-control" name="url" id="collectUrl" 
+                                       placeholder="http://api.example.com/api.php/provide/vod/" required readonly>
+                                <button type="button" class="maccms-btn maccms-btn-sm" onclick="testUrl()">
+                                    <i class="fas fa-vial"></i> 测试
+                                </button>
+                                <button type="button" class="maccms-btn maccms-btn-secondary maccms-btn-sm" onclick="loadCategories()">
+                                    <i class="fas fa-list"></i> 获取
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 第一行：操作类型、格式、分类ID -->
+                        <div class="maccms-form-row">
+                            <div class="maccms-form-group">
+                                <label class="maccms-form-label">操作类型</label>
+                                <select class="maccms-form-control" name="ac">
+                                    <option value="videolist">videolist</option>
+                                    <option value="detail">detail</option>
+                                    <option value="list">list</option>
+                                </select>
+                            </div>
+                            <div class="maccms-form-group">
+                                <label class="maccms-form-label">格式</label>
+                                <select class="maccms-form-control" name="at">
+                                    <option value="json">JSON</option>
+                                    <option value="xml">XML</option>
+                                </select>
+                            </div>
+                            <div class="maccms-form-group">
+                                <label class="maccms-form-label">分类ID</label>
+                                <input type="text" class="maccms-form-control" name="type_id" placeholder="右侧选">
+                            </div>
+                        </div>
+
+                        <!-- 第二行：视频ID、关键词 -->
+                        <div class="maccms-form-row">
+                            <div class="maccms-form-group">
+                                <label class="maccms-form-label">视频ID</label>
+                                <input type="text" class="maccms-form-control" name="ids" placeholder="123,456">
+                            </div>
+                            <div class="maccms-form-group">
+                                <label class="maccms-form-label">关键词</label>
+                                <input type="text" class="maccms-form-control" name="wd" placeholder="搜索">
+                            </div>
+                        </div>
+
+                        <!-- 第三行：时间、起始页、结束页、线程 -->
+                        <div class="maccms-form-row">
+                            <div class="maccms-form-group">
+                                <label class="maccms-form-label">时间(h)</label>
+                                <input type="number" class="maccms-form-control" name="hours" placeholder="24">
+                            </div>
+                            <div class="maccms-form-group">
+                                <label class="maccms-form-label">起始页</label>
+                                <input type="number" class="maccms-form-control" name="start_page" value="1" min="1" required>
+                            </div>
+                            <div class="maccms-form-group">
+                                <label class="maccms-form-label">结束页</label>
+                                <input type="number" class="maccms-form-control" name="end_page" placeholder="全部">
+                            </div>
+                            <div class="maccms-form-group">
+                                <label class="maccms-form-label">线程</label>
+                                <input type="number" class="maccms-form-control" name="max_workers" value="3" min="1" max="10" required>
+                            </div>
+                        </div>
+
+                        <!-- 复选框 -->
+                        <div class="maccms-checkbox">
+                            <input type="checkbox" id="updateExisting" name="update_existing" checked>
+                            <label for="updateExisting">更新已存在的视频</label>
+                        </div>
+
+                        <!-- 提交按钮 -->
+                        <button type="submit" class="maccms-btn maccms-btn-block">
+                            <i class="fas fa-play"></i> 开始采集
+                        </button>
+                    </form>
+                </div>
+            </div>
+            </div>
+
+            <!-- 右侧：采集任务 -->
+            <div class="tasks-section">
+                <div class="maccms-card">
+                    <div class="maccms-card-header">
+                        <h5>采集任务</h5>
+                    </div>
+                    <div class="maccms-card-body">
+                        <button type="button" class="maccms-btn maccms-btn-secondary maccms-btn-sm maccms-btn-block" 
+                                onclick="cleanupTasks()" style="margin-bottom: var(--spacing-md)">
+                            <i class="fas fa-broom"></i> 清理已完成
+                        </button>
+                        
+                        <div class="tasks-list">
+                            <div id="taskList">
+                                {% if all_status %}
+                                    {% for task_id, status in all_status.items() %}
+                                    <div class="task-item" data-task-id="{{ task_id }}">
+                                        <div class="task-header">
+                                            <span class="task-title">任务 #{{ task_id }}</span>
+                                            {% if status.is_running %}
+                                            <span class="task-badge badge-running">运行中</span>
+                                            {% else %}
+                                            <span class="task-badge badge-completed">已完成</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if status.is_running %}
+                                        <button class="maccms-btn maccms-btn-sm" style="background: var(--macos-red); margin-bottom: var(--spacing-sm)" 
+                                                onclick="stopTask({{ task_id }})">
+                                            <i class="fas fa-stop"></i> 停止
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <div class="task-stats">
+                                            <div class="stat-item stat-success">
+                                                <span class="stat-label">成功:</span>
+                                                <span class="stat-value">{{ status.success_count }}</span>
+                                            </div>
+                                            <div class="stat-item stat-warning">
+                                                <span class="stat-label">跳过:</span>
+                                                <span class="stat-value">{{ status.skip_count }}</span>
+                                            </div>
+                                            <div class="stat-item stat-danger">
+                                                <span class="stat-label">失败:</span>
+                                                <span class="stat-value">{{ status.failed_count }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="task-info">重复: {{ status.consecutive_duplicates }}/20</div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-secondary);">
+                                    <i class="fas fa-inbox fa-2x" style="margin-bottom: var(--spacing-md);"></i>
+                                    <p>暂无任务</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 使用说明 -->
+                <div class="maccms-card usage-guide">
+                    <div class="maccms-card-header">
+                        <h5>使用说明</h5>
+                    </div>
+                    <div class="maccms-card-body">
+                        <h6>操作流程</h6>
+                        <ol>
+                            <li>输入采集接口URL</li>
+                            <li>点击"获取"按钮</li>
+                            <li>在下方预览区选择分类</li>
+                            <li>设置采集参数</li>
+                            <li>开始采集</li>
+                        </ol>
+                        <h6>采集策略</h6>
+                        <ul>
+                            <li>多线程并发采集</li>
+                            <li>连续20个重复自动停止</li>
+                            <li>支持手动停止</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第二行：预览区域 -->
+        <div class="preview-section">
+            <!-- 分类预览 -->
+            <div class="maccms-card" id="categoryPreview" style="display:none;">
+                <div class="maccms-card-header">
+                    <h5>分类预览 <small>(点击分类卡片选择采集)</small></h5>
+                </div>
+                <div class="maccms-card-body">
+                    <div class="scroll-container">
+                        <div id="categoryCards" class="category-grid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 视频预览 -->
+            <div class="maccms-card" id="videoPreview" style="display:none;">
+                <div class="maccms-card-header">
+                    <h5>内容预览</h5>
+                </div>
+                <div class="maccms-card-body">
+                    <div class="scroll-container">
+                        <div id="videoCards" class="video-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/maccms_collect.js') }}"></script>
+{% endblock %}

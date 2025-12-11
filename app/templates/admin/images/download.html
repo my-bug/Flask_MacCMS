@@ -1,0 +1,153 @@
+{% extends "admin/base.html" %}
+
+{% block title %}图片下载 - 后台管理{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">图片下载管理</h2>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-flat">返回管理</a>
+    </div>
+
+    <div class="card-body">
+        <!-- 实时状态和结果显示 -->
+        {% if status and status.is_running or result %}
+        <div class="download-status-wrapper">
+            <div class="download-status">
+                {% if status and status.is_running %}
+                <h3>下载进行中...</h3>
+                <p class="status-desc">正在下载视频封面图片到本地服务器</p>
+                
+                <div class="progress-info">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">0%</div>
+                </div>
+                {% else %}
+                <h3>下载完成</h3>
+                <p class="status-desc">本次下载任务已完成，以下是详细统计信息</p>
+                {% endif %}
+                
+                <div class="status-info" id="status-display">
+                    <div class="status-item">
+                        <span class="label">成功:</span>
+                        <span class="value success" id="success-count">
+                            {% if status and status.is_running %}{{ status.success_count }}{% else %}{{ result.success_count }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">失败:</span>
+                        <span class="value error" id="failed-count">
+                            {% if status and status.is_running %}{{ status.failed_count }}{% else %}{{ result.failed_count }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">跳过:</span>
+                        <span class="value" id="skip-count">
+                            {% if status and status.is_running %}{{ status.skip_count }}{% else %}{{ result.skip_count }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">总计:</span>
+                        <span class="value" id="processed-count">
+                            {% if status and status.is_running %}{{ status.processed_count }}{% else %}{{ result.processed_count }}{% endif %}
+                        </span>
+                    </div>
+                    {% if status and status.is_running %}
+                    <div class="status-item full-width">
+                        <span class="label">当前处理:</span>
+                        <span class="value" id="current-video">{{ status.current_video or '准备中...' }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if status and status.is_running %}
+                <form method="POST" action="{{ url_for('admin.images_download_stop') }}" class="action-form">
+                    <button type="submit" class="btn btn-danger">停止下载</button>
+                </form>
+                {% endif %}
+
+                {% if result and not status.is_running %}
+                    {% if result.errors %}
+                    <div class="error-list">
+                        <h4>错误详情:</h4>
+                        <ul>
+                            {% for error in result.errors[:10] %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                            {% if result.errors|length > 10 %}
+                            <li class="more-errors">...还有 {{ result.errors|length - 10 }} 个错误</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 本地化统计 -->
+        <div class="info-section">
+            <div class="section-header">
+                <h3>本地化统计</h3>
+                <form method="POST" action="{{ url_for('admin.images_verify') }}" class="inline-form" data-confirm="验证将检查所有已标记为本地化的图片是否真实存在，并自动修复错误标记。
+
+确定要继续吗？">
+                    <button type="submit" class="btn btn-verify">
+                        验证本地化
+                    </button>
+                </form>
+            </div>
+            <div class="localization-stats">
+                <div class="stat-item">
+                    <span class="stat-label">已本地化:</span>
+                    <span class="stat-value success">{{ localized_count or 0 }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">未本地化:</span>
+                    <span class="stat-value">{{ total_count - (localized_count or 0) }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">本地化率:</span>
+                    <span class="stat-value">{{ '%.1f'|format((localized_count or 0) / total_count * 100 if total_count > 0 else 0) }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能说明 -->
+        <div class="info-section">
+            <h3>功能说明</h3>
+            <ul class="feature-list">
+                <li>自动下载所有视频的封面图片到本地服务器</li>
+                <li>图片保存位置: /static/uploads/posters/</li>
+                <li>自动跳过已下载的图片，避免重复下载</li>
+                <li>下载失败自动重试3次</li>
+                <li>下载完成后自动更新数据库中的图片路径</li>
+                <li>前端优先显示本地化图片，提高加载速度</li>
+                <li>自动检测本地文件是否存在，防止标记错误</li>
+                <li>支持手动验证和修复本地化标记</li>
+                <li>支持手动停止下载任务</li>
+            </ul>
+            
+            <div class="warning-box">
+                <strong>注意事项:</strong>
+                <p>下载过程中请保持网络连接稳定。大量图片下载可能需要较长时间，请耐心等待。</p>
+            </div>
+        </div>
+
+        <!-- 开始下载按钮 -->
+        {% if not status or not status.is_running %}
+        <div class="action-section">
+            <form method="POST" action="{{ url_for('admin.images_download_start') }}" class="action-form">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    开始下载图片
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/media-handler.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,204 @@
+{% extends "admin/base.html" %}
+
+{% block title %}系统日志{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1>系统日志</h1>
+</div>
+
+<div class="content-body">
+    <!-- 日志统计 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-blue">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">总日志数</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-green">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ stats.today }}</div>
+                <div class="stat-label">今日日志</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-orange">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ stats.by_type.get('collect', 0) }}</div>
+                <div class="stat-label">采集日志</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-purple">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ stats.by_type.get('download', 0) }}</div>
+                <div class="stat-label">下载日志</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 筛选和操作 -->
+    <div class="filter-section">
+        <form method="GET" class="filter-form">
+            <select name="log_type" class="form-select" onchange="this.form.submit()">
+                <option value="">全部类型</option>
+                <option value="system" {% if request.args.get('log_type') == 'system' %}selected{% endif %}>系统日志</option>
+                <option value="collect" {% if request.args.get('log_type') == 'collect' %}selected{% endif %}>采集日志</option>
+                <option value="download" {% if request.args.get('log_type') == 'download' %}selected{% endif %}>下载日志</option>
+            </select>
+
+            <select name="level" class="form-select" onchange="this.form.submit()">
+                <option value="">全部级别</option>
+                <option value="debug" {% if request.args.get('level') == 'debug' %}selected{% endif %}>调试</option>
+                <option value="info" {% if request.args.get('level') == 'info' %}selected{% endif %}>信息</option>
+                <option value="warning" {% if request.args.get('level') == 'warning' %}selected{% endif %}>警告</option>
+                <option value="error" {% if request.args.get('level') == 'error' %}selected{% endif %}>错误</option>
+                <option value="critical" {% if request.args.get('level') == 'critical' %}selected{% endif %}>严重</option>
+            </select>
+
+            <input type="text" name="keyword" class="form-input" placeholder="搜索日志内容..." 
+                   value="{{ request.args.get('keyword', '') }}">
+
+            <button type="submit" class="btn btn-primary">搜索</button>
+            <a href="{{ url_for('admin.logs') }}" class="btn btn-secondary">重置</a>
+        </form>
+
+        <div class="action-buttons">
+            <form method="POST" action="{{ url_for('admin.logs_clean') }}" class="inline-form" data-confirm="确定要清理30天前的日志吗？">
+                <button type="submit" class="btn btn-warning">清理旧日志</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.logs_clear_all') }}" class="inline-form" data-confirm="警告：此操作将删除所有日志，且不可恢复！确定要清空所有日志吗？">
+                <button type="submit" class="btn btn-danger">清空所有日志</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 日志列表 -->
+    <div class="card">
+        <div class="card-header">
+            <h3>日志记录</h3>
+            <span class="badge">共 {{ pagination.total }} 条</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th width="60">ID</th>
+                        <th width="100">类型</th>
+                        <th width="80">级别</th>
+                        <th width="120">模块</th>
+                        <th>消息</th>
+                        <th width="160">时间</th>
+                        <th width="80">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.id }}</td>
+                        <td>
+                            {% if log.log_type == 'system' %}
+                            <span class="badge badge-info">系统</span>
+                            {% elif log.log_type == 'collect' %}
+                            <span class="badge badge-warning">采集</span>
+                            {% elif log.log_type == 'download' %}
+                            <span class="badge badge-primary">下载</span>
+                            {% else %}
+                            <span class="badge">{{ log.log_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.level == 'debug' %}
+                            <span class="badge badge-secondary">调试</span>
+                            {% elif log.level == 'info' %}
+                            <span class="badge badge-success">信息</span>
+                            {% elif log.level == 'warning' %}
+                            <span class="badge badge-warning">警告</span>
+                            {% elif log.level == 'error' %}
+                            <span class="badge badge-danger">错误</span>
+                            {% elif log.level == 'critical' %}
+                            <span class="badge badge-danger">严重</span>
+                            {% else %}
+                            <span class="badge">{{ log.level }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.module or '-' }}</td>
+                        <td class="text-truncate text-truncate-300" title="{{ log.message }}">
+                            {{ log.message }}
+                        </td>
+                        <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-info" data-log-id="{{ log.id }}">详情</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center">暂无日志记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分页 -->
+        {% if pagination.pages > 1 %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.logs', page=pagination.prev_num, log_type=request.args.get('log_type', ''), level=request.args.get('level', ''), keyword=request.args.get('keyword', '')) }}" 
+               class="btn btn-sm btn-secondary">上一页</a>
+            {% endif %}
+
+            <span class="pagination-info">
+                第 {{ pagination.page }} / {{ pagination.pages }} 页
+            </span>
+
+            {% if pagination.has_next %}
+            <a href="{{ url_for('admin.logs', page=pagination.next_num, log_type=request.args.get('log_type', ''), level=request.args.get('level', ''), keyword=request.args.get('keyword', '')) }}" 
+               class="btn btn-sm btn-secondary">下一页</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 日志详情模态框 -->
+<div id="logDetailModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>日志详情</h3>
+            <button class="modal-close" id="closeLogDetailBtn">&times;</button>
+        </div>
+        <div class="modal-body" id="logDetailContent">
+            <p>加载中...</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/system-logger.js') }}"></script>
+{% endblock %}

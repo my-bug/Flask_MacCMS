@@ -1,0 +1,95 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if action == 'add' %}添加视频{% else %}编辑视频{% endif %} - 后台管理{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h2>{% if action == 'add' %}添加视频{% else %}编辑视频{% endif %}</h2>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn">返回列表</a>
+    </div>
+
+    <form method="POST" class="video-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="vod_id">视频ID *</label>
+                <input type="number" id="vod_id" name="vod_id" value="{{ video.vod_id if video else '' }}" placeholder="请输入视频ID" required>
+            </div>
+            <div class="form-group">
+                <label for="vod_name">视频名称 *</label>
+                <input type="text" id="vod_name" name="vod_name" value="{{ video.vod_name if video else '' }}" placeholder="请输入视频名称" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="type_name">分类</label>
+                <input type="text" id="type_name" name="type_name" value="{{ video.type_name if video else '' }}" placeholder="例如：动作、喜剧、科幻">
+            </div>
+            <div class="form-group">
+                <label for="vod_class">标签</label>
+                <input type="text" id="vod_class" name="vod_class" value="{{ video.vod_class if video else '' }}" placeholder="多个标签用逗号分隔">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="vod_year">年份</label>
+                <input type="text" id="vod_year" name="vod_year" value="{{ video.vod_year if video else '' }}" placeholder="例如：2024">
+            </div>
+            <div class="form-group">
+                <label for="vod_score">评分</label>
+                <input type="text" id="vod_score" name="vod_score" value="{{ video.vod_score if video else '0.0' }}" placeholder="0.0 - 10.0">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="vod_area">地区</label>
+                <input type="text" id="vod_area" name="vod_area" value="{{ video.vod_area if video else '' }}" placeholder="例如：中国大陆、美国">
+            </div>
+            <div class="form-group">
+                <label for="vod_lang">语言</label>
+                <input type="text" id="vod_lang" name="vod_lang" value="{{ video.vod_lang if video else '' }}" placeholder="例如：国语、英语">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="vod_actor">演员</label>
+            <input type="text" id="vod_actor" name="vod_actor" value="{{ video.vod_actor if video else '' }}" placeholder="多个演员用逗号分隔">
+        </div>
+
+        <div class="form-group">
+            <label for="vod_director">导演</label>
+            <input type="text" id="vod_director" name="vod_director" value="{{ video.vod_director if video else '' }}" placeholder="多个导演用逗号分隔">
+        </div>
+
+        <div class="form-group">
+            <label for="vod_pic">封面图片URL</label>
+            <input type="url" id="vod_pic" name="vod_pic" value="{{ video.vod_pic if video else '' }}" placeholder="https://example.com/image.jpg">
+        </div>
+
+        <div class="form-group">
+            <label for="vod_play_url">播放地址</label>
+            <input type="url" id="vod_play_url" name="vod_play_url" value="{{ video.vod_play_url if video else '' }}" placeholder="https://example.com/video.m3u8">
+        </div>
+
+        <div class="form-group">
+            <label for="vod_content">简介</label>
+            <textarea id="vod_content" name="vod_content" rows="5" placeholder="请输入视频简介...">{{ video.vod_content if video else '' }}</textarea>
+        </div>
+
+        {% if action == 'add' %}
+        <div class="form-group">
+            <label for="vod_time_add">添加时间戳</label>
+            <input type="number" id="vod_time_add" name="vod_time_add" value="0">
+        </div>
+        {% endif %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

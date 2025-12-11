@@ -1,0 +1,257 @@
+{% extends "admin/base.html" %}
+
+{% block title %}视频采集 - 后台管理{% endblock %}
+
+{% block content %}
+<div class="collect-container">
+    <div class="collect-header">
+        <h2>视频采集</h2>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn">返回管理</a>
+    </div>
+
+    <!-- 实时状态和结果显示 -->
+    {% if status and status.is_running or result %}
+    <div class="collect-status-wrapper">
+        <div class="collect-status">
+            {% if status and status.is_running %}
+            <h3>采集进行中... (第 <span id="current-page">{{ status.current_page }}</span> 页)</h3>
+            <p class="status-message">采集任务已启动，正在采集中...</p>
+            {% else %}
+            <h3>采集完成</h3>
+            <p class="status-message">本次采集任务已完成，以下是详细统计信息</p>
+            {% endif %}
+
+            <div class="status-info" id="status-display">
+                <div class="status-item">
+                    <span class="label">成功:</span>
+                    <span class="value" id="success-count">
+                        {% if status and status.is_running %}{{ status.success_count }}{% else %}{{ result.success_count }}{% endif %}
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="label">失败:</span>
+                    <span class="value" id="failed-count">
+                        {% if status and status.is_running %}{{ status.failed_count }}{% else %}{{ result.failed_count }}{% endif %}
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="label">跳过:</span>
+                    <span class="value" id="skip-count">
+                        {% if status and status.is_running %}{{ status.skip_count }}{% else %}{{ result.skip_count }}{% endif %}
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="label">连续重复:</span>
+                    <span class="value" id="consecutive-duplicates">
+                        {% if status and status.is_running %}{{ status.consecutive_duplicates }}{% else %}{{ result.consecutive_duplicates }}{% endif %}
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="label">总计:</span>
+                    <span class="value" id="total-count">
+                        {% if status and status.is_running %}{{ status.total_count }}{% else %}{{ result.total_count }}{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            {% if status and status.is_running %}
+            <form method="POST" action="{{ url_for('admin.stop_collect') }}" class="action-form-mt">
+                <button type="submit" class="btn btn-danger">停止采集</button>
+            </form>
+            {% endif %}
+
+            {% if result and not status.is_running %}
+                {% if result.errors %}
+                <div class="error-list">
+                    <h4>错误详情:</h4>
+                    <ul>
+                        {% for error in result.errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="collect-form-section">
+        <div class="collect-info">
+            <h3>采集说明</h3>
+            <ul>
+                <li>支持返回JSON格式的视频数据接口</li>
+                <li>自动识别常见的JSON数据结构(list, data, videos等)</li>
+                <li>自动重试机制：连接失败自动重试3次</li>
+                <li>智能退避策略：失败后等待1s、2s、4s后重试</li>
+                <li>可选择是否更新已存在的视频</li>
+                <li>采集前可测试地址是否有效</li>
+                <li>遇到连续20个重复视频自动停止</li>
+                <li>支持手动停止采集任务</li>
+            </ul>
+            <div class="warning-box">
+                <strong>网络提示：</strong><br>
+                如遇到连接错误，系统会自动重试。请确保网络连接稳定。
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.start_collect') }}" class="collect-form">
+            <div class="form-group">
+                <label for="source_id">选择采集源</label>
+                <select id="source_id" name="source_id" 
+                        required
+                        onchange="loadSourceCategories()"
+                        {% if status and status.is_running %}disabled{% endif %}>
+                    <option value="">-- 请选择采集源 --</option>
+                    {% for source in sources %}
+                    <option value="{{ source.id }}" data-url="{{ source.url }}">
+                        {{ source.name }} ({{ source.api_type }})
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if not sources %}
+                <small class="text-error-small">暂无可用采集源，请先<a href="{{ url_for('admin.sources_list') }}">添加采集源</a></small>
+                {% else %}
+                <small>从已保存的采集源中选择</small>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="category_id">选择分类</label>
+                    <select id="category_id" name="category_id"
+                            {% if status and status.is_running %}disabled{% endif %}>
+                        <option value="">-- 全部分类 --</option>
+                    </select>
+                    <small>留空则采集所有分类</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="sort_direction">排序方向</label>
+                    <select id="sort_direction" name="sort_direction"
+                            {% if status and status.is_running %}disabled{% endif %}>
+                        <option value="desc">降序(从第1页开始)</option>
+                        <option value="asc">升序(从最后一页开始)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="start_page">起始页码</label>
+                    <input type="number" id="start_page" name="start_page" 
+                           value="1" min="1"
+                           {% if status and status.is_running %}disabled{% endif %}>
+                </div>
+
+                <div class="form-group">
+                    <label for="end_page">结束页码</label>
+                    <input type="number" id="end_page" name="end_page" 
+                           placeholder="留空自动采集所有页" min="1"
+                           {% if status and status.is_running %}disabled{% endif %}>
+                    <small>留空则自动采集到最后一页</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="update_existing" checked
+                           {% if status and status.is_running %}disabled{% endif %}>
+                    <span>更新已存在的视频</span>
+                </label>
+                <small>取消勾选则跳过已存在的视频,只添加新视频。连续遇到20个重复视频将自动停止采集。</small>
+            </div>
+
+            <div id="test-result" class="test-result" style="display: none;"></div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"
+                        {% if status and status.is_running %}disabled{% endif %}>
+                    {% if status and status.is_running %}
+                    采集中...
+                    {% else %}
+                    开始采集
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// 实时更新采集状态
+let statusInterval = null;
+
+function updateStatus() {
+    fetch('{{ url_for("admin.collect_status") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.is_running) {
+                document.getElementById('success-count').textContent = data.success_count;
+                document.getElementById('failed-count').textContent = data.failed_count;
+                document.getElementById('skip-count').textContent = data.skip_count;
+                document.getElementById('consecutive-duplicates').textContent = data.consecutive_duplicates;
+                document.getElementById('total-count').textContent = data.total_count;
+                if (document.getElementById('current-page')) {
+                    document.getElementById('current-page').textContent = data.current_page || 1;
+                }
+            } else {
+                // 任务完成，刷新页面显示结果
+                if (statusInterval) {
+                    clearInterval(statusInterval);
+                    location.reload();
+                }
+            }
+        })
+        .catch(error => console.error('状态更新失败:', error));
+}
+
+// 如果有任务在运行，启动定时更新
+{% if status and status.is_running %}
+statusInterval = setInterval(updateStatus, 2000); // 每2秒更新一次
+{% endif %}
+
+// 加载采集源的分类列表
+function loadSourceCategories() {
+    const sourceSelect = document.getElementById('source_id');
+    const categorySelect = document.getElementById('category_id');
+    const sourceId = sourceSelect.value;
+    
+    // 清空分类选择
+    categorySelect.innerHTML = '<option value="">-- 全部分类 --</option>';
+    
+    if (!sourceId) {
+        return;
+    }
+    
+    // 显示加载状态
+    categorySelect.innerHTML = '<option value="">加载中...</option>';
+    categorySelect.disabled = true;
+    
+    // 获取分类列表
+    fetch(`/admin/collect/source/${sourceId}/categories`)
+        .then(response => response.json())
+        .then(data => {
+            categorySelect.disabled = false;
+            
+            if (data.success && data.categories && data.categories.length > 0) {
+                // 重新填充分类选项
+                categorySelect.innerHTML = '<option value="">-- 全部分类 --</option>';
+                data.categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    categorySelect.appendChild(option);
+                });
+            } else {
+                categorySelect.innerHTML = '<option value="">-- 暂无分类 --</option>';
+            }
+        })
+        .catch(error => {
+            console.error('加载分类失败:', error);
+            categorySelect.disabled = false;
+            categorySelect.innerHTML = '<option value="">-- 加载失败 --</option>';
+        });
+}
+</script>
+{% endblock %}

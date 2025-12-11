@@ -1,0 +1,88 @@
+{% extends "frontend/base.html" %}
+
+{% block title %}{{ video.vod_name }} - 视频CMS系统{% endblock %}
+
+{% block content %}
+<div class="video-detail">
+    <div class="video-player-section">
+        <div class="video-header">
+            <h1 class="video-title-large">{{ video.vod_name }}</h1>
+            <div class="video-meta-large">
+                <span class="meta-item">分类: {{ video.type_name or '未分类' }}</span>
+                <span class="meta-item">年份: {{ video.vod_year }}</span>
+                <span class="meta-item">评分: {{ video.vod_score }}</span>
+                <span class="meta-item">播放: {{ video.vod_hits }}</span>
+            </div>
+            <hr />
+        </div>
+        <div class="video-player">
+            {% if video.vod_play_url %}
+                <video id="videoPlayer" controls width="100%" data-src="{{ video.vod_play_url }}">
+                    <source src="{{ video.vod_play_url }}" type="application/x-mpegURL">
+                    您的浏览器不支持视频播放。
+                </video>
+            {% else %}
+                <div class="no-video">
+                    <p>暂无播放源</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="video-info-section">
+        <div class="info-item">
+            <label>标签:</label>
+            <span>{{ video.vod_class or '暂无' }}</span>
+        </div>
+        
+        {% if video.vod_actor %}
+        <div class="info-item">
+            <label>演员:</label>
+            <span>{{ video.vod_actor }}</span>
+        </div>
+        {% endif %}
+        
+        {% if video.vod_director %}
+        <div class="info-item">
+            <label>导演:</label>
+            <span>{{ video.vod_director }}</span>
+        </div>
+        {% endif %}
+        
+        {% if video.vod_area %}
+        <div class="info-item">
+            <label>地区:</label>
+            <span>{{ video.vod_area }}</span>
+        </div>
+        {% endif %}
+        
+        {% if video.vod_lang %}
+        <div class="info-item">
+            <label>语言:</label>
+            <span>{{ video.vod_lang }}</span>
+        </div>
+        {% endif %}
+        
+        {% if video.vod_content %}
+        <div class="info-item">
+            <label>简介:</label>
+            <p>{{ video.vod_content }}</p>
+        </div>
+        {% endif %}
+        {% if video.vod_play_url %}
+        <div class="info-item">
+            <label>播放地址:</label>
+            <p>{{ video.vod_play_url }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="back-button">
+        <a href="{{ url_for('frontend.index') }}" class="btn">返回首页</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+{% endblock %}

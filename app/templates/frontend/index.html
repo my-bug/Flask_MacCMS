@@ -1,0 +1,70 @@
+{% extends "frontend/base.html" %}
+
+{% block content %}
+{% if categories %}
+<div class="frontend-categories">
+    <a href="{{ url_for('frontend.index') }}" class="category-tag {% if not category %}active{% endif %}">全部</a>
+    {% for cat_name, cat_count in categories %}
+    <a href="{{ url_for('frontend.index', category=cat_name) }}" class="category-tag {% if category == cat_name %}active{% endif %}">
+        {{ cat_name }} <span class="tag-count">{{ cat_count }}</span>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="video-grid">
+    {% if videos %}
+        {% for video in videos %}
+        <a href="{{ url_for('frontend.video_detail', vod_id=video.vod_id) }}" class="video-card">
+            <div class="video-card-image">
+                {% if video.is_localized and video.local_pic %}
+                <img src="{{ url_for('static', filename='uploads/posters/' + video.local_pic) }}" alt="{{ video.vod_name }}" loading="lazy">
+                {% else %}
+                <img src="{{ video.vod_pic or 'https://via.placeholder.com/300x400' }}" alt="{{ video.vod_name }}" loading="lazy">
+                {% endif %}
+            </div>
+            <div class="video-card-info">
+                <h3 class="video-card-title">{{ video.vod_name }}</h3>
+                <div class="video-card-meta">
+                    <span>{{ video.type_name or '未分类' }}</span>
+                    {% if video.vod_year %}
+                    <span>{{ video.vod_year }}</span>
+                    {% endif %}
+                    {% if video.vod_score %}
+                    <span>{{ video.vod_score }}分</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    {% else %}
+        <div class="no-results">
+            <p>暂无视频内容</p>
+        </div>
+    {% endif %}
+</div>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('frontend.index', page=pagination.prev_num, search=search, category=category) }}" class="page-link">上一页</a>
+    {% endif %}
+    
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if page_num %}
+            {% if page_num == pagination.page %}
+                <span class="page-link active">{{ page_num }}</span>
+            {% else %}
+                <a href="{{ url_for('frontend.index', page=page_num, search=search, category=category) }}" class="page-link">{{ page_num }}</a>
+            {% endif %}
+        {% else %}
+            <span class="page-link disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    
+    {% if pagination.has_next %}
+        <a href="{{ url_for('frontend.index', page=pagination.next_num, search=search, category=category) }}" class="page-link">下一页</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

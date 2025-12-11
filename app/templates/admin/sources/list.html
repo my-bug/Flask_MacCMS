@@ -1,0 +1,71 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">采集源管理</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('admin.source_add') }}" class="btn btn-primary">
+                <span>+ 添加采集源</span>
+            </a>
+        </div>
+    </div>
+    
+    <div class="card-body">
+        {% if sources %}
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>名称</th>
+                        <th>API地址</th>
+                        <th>类型</th>
+                        <th>状态</th>
+                        <th>排序</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for source in sources %}
+                    <tr>
+                        <td>{{ source.id }}</td>
+                        <td>{{ source.name }}</td>
+                        <td>
+                            <span class="text-muted url-truncate">
+                                {{ source.url }}
+                            </span>
+                        </td>
+                        <td>{{ source.api_type }}</td>
+                        <td>
+                            {% if source.is_active %}
+                                <span class="badge badge-success">启用</span>
+                            {% else %}
+                                <span class="badge badge-secondary">禁用</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ source.sort_order }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{{ url_for('admin.source_edit', id=source.id) }}" 
+                                   class="btn btn-sm btn-primary">编辑</a>
+                                <form method="POST" action="{{ url_for('admin.source_delete', id=source.id) }}" 
+                                      class="inline-form" 
+                                      data-confirm="确定要删除这个采集源吗？">
+                                    <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="no-results">
+            <p>暂无采集源，请先添加</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

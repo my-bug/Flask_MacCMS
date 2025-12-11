@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: cmsmovie
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./instance:/app/instance
+      - ./backups:/app/backups
+      - ./app/static/uploads:/app/app/static/uploads
+      - ./logs:/app/logs
+    environment:
+      - FLASK_ENV=production
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
+    restart: unless-stopped
+    networks:
+      - cmsmovie-network
+
+networks:
+  cmsmovie-network:
+    driver: bridge

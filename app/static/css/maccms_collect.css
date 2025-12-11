@@ -1,0 +1,534 @@
+/* MacCMS10 采集页面样式 - macOS 风格 */
+
+/* 页面容器 */
+.maccms-collect-container {
+    padding: var(--spacing-lg);
+    background: var(--bg-primary);
+    min-height: 100vh;
+}
+
+/* 页面头部 */
+.maccms-collect-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.maccms-collect-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* 布局 - 上下布局 */
+.maccms-layout {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* 卡片通用样式 */
+.maccms-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+    width: 100%;
+}
+
+.maccms-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.maccms-card-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.maccms-card-header h5 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.maccms-card-header small {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.maccms-card-body {
+    padding: var(--spacing-lg);
+}
+
+/* 配置区域 */
+.config-section {
+    width: 100%;
+}
+
+/* 配置和任务并排 */
+.config-tasks-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    width: 100%;
+}
+
+/* 表单样式 */
+.maccms-form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.maccms-form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.maccms-form-control {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.maccms-form-control:focus {
+    outline: none;
+    border-color: var(--macos-blue);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.maccms-form-control::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* 按钮组 */
+.maccms-btn-group {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.maccms-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-white);
+    background: var(--macos-blue);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.maccms-btn:hover {
+    background: var(--macos-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.maccms-btn:active {
+    transform: translateY(0);
+}
+
+.maccms-btn-secondary {
+    background: var(--macos-gray);
+}
+
+.maccms-btn-secondary:hover {
+    background: #6e6e73;
+}
+
+.maccms-btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.maccms-btn-block {
+    width: 100%;
+    display: block;
+}
+
+/* 表单行 */
+.maccms-form-row {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.maccms-form-row .maccms-form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* 预览区域 - 每个卡片独占一行 */
+.preview-section {
+    width: 100%;
+    margin-bottom: var(--spacing-lg);
+}
+
+.preview-section > .maccms-card {
+    margin-bottom: var(--spacing-lg);
+    width: 100%;
+}
+
+/* 分类预览网格 */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.category-card {
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.category-card:hover::before {
+    opacity: 1;
+}
+
+.category-card:hover {
+    transform: translateY(-2px);
+    background: var(--bg-tertiary);
+    border-color: var(--macos-blue);
+}
+
+.category-card.active {
+    background: rgba(0, 122, 255, 0.1);
+    border-color: var(--macos-blue);
+    border-width: 2px;
+}
+
+.category-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.category-id {
+    font-size: 11px;
+    opacity: 0.7;
+    background: transparent;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    display: inline-block;
+}
+
+/* 视频预览网格 */
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.video-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.video-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.video-thumb {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    background: var(--bg-tertiary);
+}
+
+.video-info {
+    padding: var(--spacing-sm);
+}
+
+.video-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.video-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.video-meta span {
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+}
+
+/* 任务区域 */
+.tasks-section {
+    width: 100%;
+}
+
+.tasks-section > .maccms-card {
+    width: 100%;
+}
+
+.tasks-list {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: var(--spacing-sm);
+}
+
+.tasks-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tasks-list::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+}
+
+.tasks-list::-webkit-scrollbar-thumb {
+    background: var(--macos-gray);
+    border-radius: 3px;
+}
+
+/* 任务项 */
+.task-item {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+}
+
+.task-item:hover {
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.task-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.task-badge {
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+}
+
+.badge-running {
+    background: var(--macos-blue);
+    color: white;
+}
+
+.badge-completed {
+    background: var(--macos-gray);
+    color: white;
+}
+
+/* 任务统计 */
+.task-stats {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 12px;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-value {
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-xs);
+    background: var(--bg-tertiary);
+}
+
+.stat-success .stat-value {
+    color: var(--macos-green);
+}
+
+.stat-warning .stat-value {
+    color: var(--macos-orange);
+}
+
+.stat-danger .stat-value {
+    color: var(--macos-red);
+}
+
+.task-info {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* 使用说明 */
+.usage-guide {
+    margin-top: var(--spacing-lg);
+}
+
+.usage-guide h6 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.usage-guide ol,
+.usage-guide ul {
+    margin: 0;
+    padding-left: var(--spacing-lg);
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.usage-guide li {
+    margin-bottom: var(--spacing-xs);
+}
+
+/* 复选框 */
+.maccms-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.maccms-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.maccms-checkbox label {
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* 输入组 */
+.input-group {
+    display: flex;
+    gap: 0;
+}
+
+.input-group .maccms-form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
+}
+
+.input-group .maccms-btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group .maccms-btn:not(:last-child) {
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0;
+}
+
+.input-group .maccms-btn:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* 滚动容器 */
+.scroll-container {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: var(--spacing-sm);
+}
+
+.scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+    background: var(--macos-gray);
+    border-radius: 3px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #6e6e73;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+    .config-tasks-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .preview-section {
+        grid-template-columns: 1fr;
+    }
+}

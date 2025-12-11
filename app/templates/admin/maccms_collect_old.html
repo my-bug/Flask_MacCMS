@@ -1,0 +1,764 @@
+{% extends "admin/base.html" %}
+
+{% block title %}MacCMS10通用采集 - 后台管理{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>MacCMS10通用采集</h1>
+    <p class="text-muted">兼容标准MacCMS10采集接口（JSON/XML格式）</p>
+</div>
+
+<div class="row">
+    <!-- 左侧：采集配置 -->
+    <div class="col-md-3">
+        <div class="card sticky-config">
+            <div class="card-header">
+                <h5 class="card-title">采集配置</h5>
+            </div>
+            <div class="card-body">
+                <form id="collectForm">
+                    <div class="form-group form-group-sm mb-2">
+                        <label class="small mb-1">采集接口URL <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control form-control-sm" name="url" id="collectUrl" 
+                                   placeholder="http://api.example.com/api.php/provide/vod/" required>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-sm btn-info" onclick="testUrl()">
+                                    <i class="fas fa-vial"></i> 测试
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="loadCategories()">
+                                    <i class="fas fa-list"></i> 获取
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-group form-group-sm mb-2">
+                                <label class="small mb-1">操作类型</label>
+                                <select class="form-control form-control-sm" name="ac">
+                                    <option value="videolist">videolist</option>
+                                    <option value="detail">detail</option>
+                                    <option value="list">list</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-group form-group-sm mb-2">
+                                <label class="small mb-1">格式</label>
+                                <select class="form-control form-control-sm" name="at">
+                                    <option value="json">JSON</option>
+                                    <option value="xml">XML</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-group form-group-sm mb-2">
+                                <label class="small mb-1">分类ID</label>
+                                <input type="text" class="form-control form-control-sm" name="type_id" 
+                                       placeholder="右侧选">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="form-group form-group-sm mb-2">
+                                <label class="small mb-1">视频ID</label>
+                                <input type="text" class="form-control form-control-sm" name="ids" 
+                                       placeholder="123,456">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group form-group-sm mb-2">
+                                <label class="small mb-1">关键词</label>
+                                <input type="text" class="form-control form-control-sm" name="wd" 
+                                       placeholder="搜索">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-3">
+                            <div class="form-group form-group-sm mb-2">
+                                <label class="small mb-1">时间(h)</label>
+                                <input type="number" class="form-control form-control-sm" name="hours" 
+                                       placeholder="24">
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="form-group form-group-sm mb-2">
+                                <label class="small mb-1">起始页</label>
+                                <input type="number" class="form-control form-control-sm" name="start_page" 
+                                       value="1" min="1" required>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="form-group form-group-sm mb-2">
+                                <label class="small mb-1">结束页</label>
+                                <input type="number" class="form-control form-control-sm" name="end_page" 
+                                       placeholder="全部">
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="form-group form-group-sm mb-2">
+                                <label class="small mb-1">线程</label>
+                                <input type="number" class="form-control form-control-sm" name="max_workers" 
+                                       value="3" min="1" max="10" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-group-sm mb-2">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" 
+                                   id="updateExisting" name="update_existing" checked>
+                            <label class="custom-control-label small" for="updateExisting">
+                                更新已存在的视频
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-sm btn-block">
+                        <i class="fas fa-play"></i> 开始采集
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 使用说明 -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">使用说明</h6>
+            </div>
+            <div class="card-body small">
+                <p class="mb-2"><strong>操作流程：</strong></p>
+                <ol class="pl-3 mb-2">
+                    <li>输入采集接口URL</li>
+                    <li>点击"获取"按钮</li>
+                    <li>在右侧预览区选择分类</li>
+                    <li>设置采集参数</li>
+                    <li>开始采集</li>
+                </ol>
+                <p class="mb-2"><strong>采集策略：</strong></p>
+                <ul class="pl-3 mb-0">
+                    <li>多线程并发采集</li>
+                    <li>连续20个重复自动停止</li>
+                    <li>支持手动停止</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 中间：预览区域 -->
+    <div class="col-md-6">
+        <!-- 分类预览 -->
+        <div class="card mb-3" id="categoryPreview" style="display:none;">
+            <div class="card-header">
+                <h5 class="card-title">分类预览 <small class="text-muted">(点击分类卡片选择采集)</small></h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <div id="categoryCards" class="category-preview-grid">
+                    <!-- 动态加载分类卡片 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 视频预览 -->
+        <div class="card" id="videoPreview" style="display:none;">
+            <div class="card-header">
+                <h5 class="card-title">视频预览 <small class="text-muted">(默认返回的视频列表)</small></h5>
+            </div>
+            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                <div id="videoCards" class="video-preview-grid">
+                    <!-- 动态加载视频卡片 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧：采集状态 -->
+    <div class="col-md-3">
+        <div class="card sticky-tasks">
+            <div class="card-header">
+                <h5 class="card-title mb-0">采集任务</h5>
+            </div>
+            <div class="card-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
+                <button type="button" class="btn btn-sm btn-warning btn-block mb-3" onclick="cleanupTasks()">
+                    <i class="fas fa-broom"></i> 清理已完成
+                </button>
+                <div id="taskList">
+                    {% if all_status %}
+                        {% for task_id, status in all_status.items() %}
+                        <div class="task-item mb-2 p-2 border rounded" data-task-id="{{ task_id }}">
+                            <div class="mb-2">
+                                <strong class="d-block">任务 #{{ task_id }}</strong>
+                                {% if status.is_running %}
+                                <span class="badge badge-primary badge-sm">运行中</span>
+                                <button class="btn btn-xs btn-danger mt-1" onclick="stopTask({{ task_id }})">
+                                    <i class="fas fa-stop"></i> 停止
+                                </button>
+                                {% else %}
+                                <span class="badge badge-secondary badge-sm">已完成</span>
+                                {% endif %}
+                            </div>
+                            <div class="progress mb-1" style="height: 15px;">
+                                <div class="progress-bar bg-success" style="width: {{ (status.success_count / (status.success_count + status.skip_count + status.failed_count) * 100) if (status.success_count + status.skip_count + status.failed_count) > 0 else 0 }}%">
+                                    {{ status.success_count }}
+                                </div>
+                                <div class="progress-bar bg-warning" style="width: {{ (status.skip_count / (status.success_count + status.skip_count + status.failed_count) * 100) if (status.success_count + status.skip_count + status.failed_count) > 0 else 0 }}%">
+                                    {{ status.skip_count }}
+                                </div>
+                                <div class="progress-bar bg-danger" style="width: {{ (status.failed_count / (status.success_count + status.skip_count + status.failed_count) * 100) if (status.success_count + status.skip_count + status.failed_count) > 0 else 0 }}%">
+                                    {{ status.failed_count }}
+                                </div>
+                            </div>
+                            <small class="text-muted d-block">重复: {{ status.consecutive_duplicates }}/20</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p class="small">暂无任务</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 清除浮动和布局修复 */
+.row {
+    margin-left: -15px;
+    margin-right: -15px;
+}
+.row::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* 左侧配置区域 */
+.sticky-config {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+
+/* 右侧任务区域 */
+.sticky-tasks {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+}
+
+/* 紧凑型表单样式 */
+.form-group-sm {
+    margin-bottom: 0.5rem;
+}
+.form-group-sm label.small {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #495057;
+    display: block;
+    white-space: nowrap;
+}
+.form-control-sm {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    height: auto;
+}
+
+/* 强制多列布局 - 防止响应式换行 */
+#collectForm .row {
+    display: flex;
+    flex-wrap: nowrap;
+    margin-left: -5px;
+    margin-right: -5px;
+    gap: 0;
+}
+#collectForm .row > [class*="col-"] {
+    padding-left: 5px;
+    padding-right: 5px;
+    flex-shrink: 0;
+}
+#collectForm .col-3 {
+    width: 25%;
+    flex: 0 0 25%;
+}
+#collectForm .col-4 {
+    width: 33.333%;
+    flex: 0 0 33.333%;
+}
+#collectForm .col-6 {
+    width: 50%;
+    flex: 0 0 50%;
+}
+
+/* 卡片固定 */
+.card {
+    margin-bottom: 1rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+}
+.card-header {
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+.card-body {
+    padding: 1rem;
+}
+
+/* 任务列表样式 */
+#taskList {
+    clear: both;
+}
+.task-item {
+    background: #f8f9fa;
+    transition: all 0.3s;
+    font-size: 0.85rem;
+    clear: both;
+    overflow: hidden;
+}
+.task-item:hover {
+    background: #e9ecef;
+}
+.btn-xs {
+    padding: 0.1rem 0.4rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+.task-item .progress {
+    clear: both;
+    overflow: hidden;
+}
+.task-item .badge {
+    display: inline-block;
+    margin-right: 5px;
+}
+
+/* 分类预览卡片样式 */
+.category-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    clear: both;
+    overflow: hidden;
+}
+
+.category-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.category-card:hover::before {
+    opacity: 1;
+}
+
+.category-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.category-card.active {
+    border-color: #28a745;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
+}
+
+.category-card .category-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 5px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.category-card .category-count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2px 6px;
+    border-radius: 10px;
+    display: inline-block;
+}
+
+/* 视频预览卡片样式 */
+.video-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    clear: both;
+    overflow: hidden;
+}
+
+.video-card-preview {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.video-card-preview:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.video-card-preview .video-thumb {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    background: #f0f0f0;
+}
+
+.video-card-preview .video-info {
+    padding: 10px;
+}
+
+.video-card-preview .video-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.video-card-preview .video-meta {
+    font-size: 11px;
+    color: #999;
+}
+
+.video-card-preview .video-meta span {
+    margin-right: 8px;
+}
+</style>
+
+<script>
+let statusInterval = null;
+
+// 测试采集URL
+function testUrl() {
+    const url = document.getElementById('collectUrl').value;
+    const at = document.querySelector('select[name="at"]').value;
+    
+    if (!url) {
+        alert('请输入采集接口URL');
+        return;
+    }
+    
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 测试中...';
+    btn.disabled = true;
+    
+    fetch('{{ url_for("admin.maccms_collect_test") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({url: url, at: at})
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+        
+        if (data.success) {
+            alert(`接口测试成功！\n\n总数据: ${data.info.total}\n总页数: ${data.info.pagecount}\n每页: ${data.info.limit}\n分类数: ${data.info.categories.length}\n示例数据: ${data.info.sample_count} 条`);
+        } else {
+            alert('测试失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+        alert('测试失败: ' + error);
+    });
+}
+
+// 获取分类列表
+function loadCategories() {
+    const url = document.getElementById('collectUrl').value;
+    const at = document.querySelector('select[name="at"]').value;
+    
+    if (!url) {
+        alert('请输入采集接口URL');
+        return;
+    }
+    
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
+    btn.disabled = true;
+    
+    fetch('{{ url_for("admin.maccms_get_categories") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({url: url, at: at})
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+        
+        if (data.success) {
+            // 显示分类卡片（带选择功能）
+            displayCategoryCards(data.categories);
+            // 直接使用返回的视频列表显示预览
+            if (data.videos && data.videos.length > 0) {
+                displayVideoCards(data.videos);
+            }
+        } else {
+            alert('获取分类失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+        alert('获取分类失败: ' + error);
+    });
+}
+
+// 显示分类卡片（带选择功能）
+function displayCategoryCards(categories) {
+    const cardsContainer = document.getElementById('categoryCards');
+    const previewSection = document.getElementById('categoryPreview');
+    
+    if (!categories || categories.length === 0) {
+        previewSection.style.display = 'none';
+        return;
+    }
+    
+    previewSection.style.display = 'block';
+    cardsContainer.innerHTML = '';
+    
+    categories.forEach(cat => {
+        const card = document.createElement('div');
+        card.className = 'category-card';
+        card.dataset.typeId = cat.type_id;
+        card.innerHTML = `
+            <div class="category-name">${cat.type_name}</div>
+            <div class="category-count">ID: ${cat.type_id}</div>
+        `;
+        
+        // 点击卡片选择分类
+        card.onclick = function() {
+            // 更新表单中的分类ID
+            document.querySelector('input[name="type_id"]').value = cat.type_id;
+            
+            // 切换选中状态
+            cardsContainer.querySelectorAll('.category-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+        };
+        
+        cardsContainer.appendChild(card);
+    });
+}
+
+// 显示视频卡片
+function displayVideoCards(videos) {
+    const container = document.getElementById('videoCards');
+    
+    if (videos.length === 0) {
+        container.innerHTML = '<div class="text-center w-100 text-muted">该分类暂无视频</div>';
+        return;
+    }
+    
+    // 显示视频预览区域
+    document.getElementById('videoPreview').style.display = 'block';
+    
+    container.innerHTML = '';
+    videos.forEach(video => {
+        const card = document.createElement('div');
+        card.className = 'video-card-preview';
+        
+        const imgUrl = video.vod_pic || '';
+        const videoName = video.vod_name || '未知';
+        const videoRemarks = video.vod_remarks || '';
+        const videoYear = video.vod_year || '';
+        const typeName = video.type_name || '未分类';
+        
+        card.innerHTML = `
+            <img src="${imgUrl}" alt="${videoName}" class="video-thumb" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'120\\'%3E%3Crect fill=\\'%23f0f0f0\\' width=\\'200\\' height=\\'120\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\' fill=\\'%23999\\' font-size=\\'14\\'%3E暂无图片%3C/text%3E%3C/svg%3E'">
+            <div class="video-info">
+                <div class="video-name" title="${videoName}">${videoName}</div>
+                <div class="video-meta">
+                    <span>📂 ${typeName}</span>
+                    ${videoYear ? `<span>📅 ${videoYear}</span>` : ''}
+                    ${videoRemarks ? `<span>📺 ${videoRemarks}</span>` : ''}
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// 提交采集表单
+document.getElementById('collectForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const btn = this.querySelector('button[type="submit"]');
+    const originalHtml = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 启动中...';
+    btn.disabled = true;
+    
+    fetch('{{ url_for("admin.maccms_collect_start") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+        
+        if (data.success) {
+            alert(data.message);
+            // 刷新页面显示新任务
+            location.reload();
+        } else {
+            alert('启动失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+        alert('启动失败: ' + error);
+    });
+});
+
+// 停止任务
+function stopTask(taskId) {
+    if (!confirm('确定要停止任务 #' + taskId + ' 吗？')) {
+        return;
+    }
+    
+    fetch(`{{ url_for("admin.maccms_collect_stop", task_id=0) }}`.replace('/0', '/' + taskId), {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            updateTaskStatus(taskId);
+        } else {
+            alert('停止失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('停止失败: ' + error);
+    });
+}
+
+// 清理已完成任务
+function cleanupTasks() {
+    fetch('{{ url_for("admin.maccms_collect_cleanup") }}', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('清理失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('清理失败: ' + error);
+    });
+}
+
+// 更新任务状态
+function updateTaskStatus(taskId) {
+    fetch(`{{ url_for("admin.maccms_collect_status", task_id=0) }}`.replace('/0', '/' + taskId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const status = data.status;
+            const taskItem = document.querySelector(`[data-task-id="${taskId}"]`);
+            if (taskItem) {
+                // 更新进度条和统计
+                const total = status.success_count + status.skip_count + status.failed_count;
+                const successPct = total > 0 ? (status.success_count / total * 100) : 0;
+                const skipPct = total > 0 ? (status.skip_count / total * 100) : 0;
+                const failedPct = total > 0 ? (status.failed_count / total * 100) : 0;
+                
+                taskItem.querySelector('.progress').innerHTML = `
+                    <div class="progress-bar bg-success" style="width: ${successPct}%">成功: ${status.success_count}</div>
+                    <div class="progress-bar bg-warning" style="width: ${skipPct}%">跳过: ${status.skip_count}</div>
+                    <div class="progress-bar bg-danger" style="width: ${failedPct}%">失败: ${status.failed_count}</div>
+                `;
+                
+                taskItem.querySelector('small').textContent = `连续重复: ${status.consecutive_duplicates} / 20`;
+                
+                // 更新状态标签
+                if (!status.is_running) {
+                    const badge = taskItem.querySelector('.badge');
+                    badge.className = 'badge badge-secondary';
+                    badge.textContent = '已完成';
+                    const stopBtn = taskItem.querySelector('.btn-danger');
+                    if (stopBtn) stopBtn.remove();
+                }
+            }
+        }
+    });
+}
+
+// 自动刷新所有运行中的任务状态
+function startAutoRefresh() {
+    statusInterval = setInterval(() => {
+        const runningTasks = document.querySelectorAll('.task-item .badge-primary');
+        runningTasks.forEach(badge => {
+            const taskItem = badge.closest('.task-item');
+            const taskId = taskItem.dataset.taskId;
+            updateTaskStatus(taskId);
+        });
+    }, 3000); // 每3秒刷新一次
+}
+
+// 页面加载完成后启动自动刷新
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.querySelectorAll('.task-item .badge-primary').length > 0) {
+        startAutoRefresh();
+    }
+});
+
+// 页面卸载时清除定时器
+window.addEventListener('beforeunload', function() {
+    if (statusInterval) {
+        clearInterval(statusInterval);
+    }
+});
+</script>
+{% endblock %}

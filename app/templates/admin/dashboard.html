@@ -1,0 +1,124 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h2>视频管理中心</h2>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('admin.add_video') }}" class="btn btn-primary">
+                添加视频
+            </a>
+            <form method="POST" action="{{ url_for('admin.clear_all_videos') }}" class="inline-form" data-confirm="警告：此操作将删除所有视频数据，且不可恢复！
+
+确定要清空所有视频吗？">
+                <button type="submit" class="btn btn-danger">清空所有视频</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="dashboard-stats">
+        <div class="stat-card stat-card-white">
+            <h3>视频总数</h3>
+            <p class="stat-number">{{ total_videos }}</p>
+        </div>
+        <div class="stat-card stat-card-white">
+            <h3>分类数量</h3>
+            <p class="stat-number">{{ category_count }}</p>
+        </div>
+    </div>
+
+    {% if categories %}
+    <div class="category-tags-section">
+        <h3 class="section-title">分类标签</h3>
+        <div class="category-tags">
+            {% for category, count in categories %}
+            <div class="category-tag-item">
+                <a href="{{ url_for('admin.dashboard', search=category) }}" class="category-tag">
+                    {{ category }} <span class="tag-count">{{ count }}</span>
+                </a>
+                <form method="POST" action="{{ url_for('admin.clear_category_videos') }}" class="inline-form" data-confirm="确定要清空分类 [{{ category }}] 的所有 {{ count }} 个视频吗？
+
+此操作将同时删除本地化图片，且不可恢复！">
+                    <input type="hidden" name="category" value="{{ category }}">
+                    <button type="submit" class="btn btn-xs btn-danger">清空</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="search-section">
+        <form action="{{ url_for('admin.dashboard') }}" method="get" class="search-form">
+            <input type="text" name="search" placeholder="搜索视频名称、分类..." value="{{ search or '' }}">
+            <button type="submit" class="btn btn-primary">搜索</button>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>视频ID</th>
+                    <th>名称</th>
+                    <th>分类</th>
+                    <th>年份</th>
+                    <th>评分</th>
+                    <th>播放数</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if videos %}
+                    {% for video in videos %}
+                    <tr>
+                        <td>{{ video.id }}</td>
+                        <td>{{ video.vod_id }}</td>
+                        <td>{{ video.vod_name }}</td>
+                        <td>{{ video.type_name or '未分类' }}</td>
+                        <td>{{ video.vod_year }}</td>
+                        <td>{{ video.vod_score }}</td>
+                        <td>{{ video.vod_hits }}</td>
+                        <td class="action-buttons">
+                            <a href="{{ url_for('admin.edit_video', id=video.id) }}" class="btn btn-sm btn-info">编辑</a>
+                            <form method="POST" action="{{ url_for('admin.delete_video', id=video.id) }}" class="inline-form" data-confirm="确定要删除视频《{{ video.vod_name }}》吗？">
+                                <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center">暂无数据</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.dashboard', page=pagination.prev_num, search=search) }}" class="page-link">上一页</a>
+        {% endif %}
+        
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == pagination.page %}
+                    <span class="page-link active">{{ page_num }}</span>
+                {% else %}
+                    <a href="{{ url_for('admin.dashboard', page=page_num, search=search) }}" class="page-link">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="page-link disabled">...</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.dashboard', page=pagination.next_num, search=search) }}" class="page-link">下一页</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
