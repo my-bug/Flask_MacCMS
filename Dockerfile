@@ -27,7 +27,7 @@ COPY . .
 RUN mkdir -p instance backups app/static/uploads/posters logs
 
 # 设置权限
-RUN chmod +x start.sh db_manager.py
+RUN chmod +x start.py db_manager.py
 
 # 暴露端口
 EXPOSE 5000
