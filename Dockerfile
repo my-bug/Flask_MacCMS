@@ -32,9 +32,15 @@ RUN chmod +x start.py db_manager.py
 # 暴露端口
 EXPOSE 5000
 
+# 创建启动脚本
+RUN echo '#!/bin/bash\n\
+python3 db_manager.py init 2>/dev/null || true\n\
+exec gunicorn -w 4 -b 0.0.0.0:5000 --access-logfile - --error-logfile - "app:create_app()"' > /app/entrypoint.sh \
+    && chmod +x /app/entrypoint.sh
+
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:5000/health', timeout=5)" || exit 1
 
 # 启动命令
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "--access-logfile", "-", "--error-logfile", "-", "app:create_app()"]
+CMD ["/app/entrypoint.sh"]
